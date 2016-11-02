@@ -17,12 +17,12 @@ class PyTest(setuptools.command.test.test):
 
 setup(
     name='raven-harakiri',
-    version='0.1.3LMI',
+    version='0.1.4LMI',
     py_modules=['raven_harakiri'],
     url='http://github.com/LexMachinaInc/raven-harakiri',
     license='MIT',
-    author='Ilya Baryshev',
-    author_email='baryshev@gmail.com',
+    author='Sean Davis',
+    author_email='sdavis@lexmachina.com',
     description='Send UWSGI harakiri logs to sentry',
     long_description=open('README.rst').read(),
     entry_points={
