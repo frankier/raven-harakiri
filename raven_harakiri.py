@@ -89,7 +89,6 @@ def send_message(client, options, traceback):
         },
     }
 
-    print('Sending a message...', )
     ident = client.get_ident(client.captureMessage(
         message='uWSGI harakiri',
         data=data,
@@ -99,10 +98,9 @@ def send_message(client, options, traceback):
     ))
 
     if client.state.did_fail():
-        print('error!')
         return False
 
-    print('event %r' % ident)
+    return ident
 
 
 def main():
@@ -124,10 +122,6 @@ def main():
 
     if not opts.verbose:
         sys.stdout = StringIO()
-
-    print("Using DSN configuration:")
-    print(" ", dsn)
-    print()
 
     traceback = ''.join([line for line in fileinput.input(args)])
 
