@@ -54,7 +54,7 @@ def convert_traceback(uwsgi_traceback):
         if values:
             frame_result = {
                 'abs_path': values['filename'],
-                'context_line': values['line'].rstrip(),
+                'context_line': values['line'],
                 'filename': (values['filename']),
                 'function': values['function'],
                 'lineno': int(values['lineno']),
