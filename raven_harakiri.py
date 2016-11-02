@@ -15,7 +15,7 @@ import sys
 from optparse import OptionParser
 from raven import get_version, os, Client
 from raven.utils import json
-from raven.utils.six import StringIO
+from six import StringIO
 from raven.utils.stacks import get_lines_from_file
 
 
@@ -39,7 +39,11 @@ def convert_traceback(uwsgi_traceback):
         More info: http://sentry.readthedocs.org/en/latest/developer/client/#building-the-json-packet
                    http://uwsgi-docs.readthedocs.org/en/latest/Tracebacker.html
 
-        thread_id = MainThread filename = /home/belonika/.pythonz/pythons/CPython-2.6.8/lib/python2.6/socket.py lineno = 554 function = create_connection line = sock.connect(sa)
+        thread_id = MainThread
+        filename = /home/belonika/.pythonz/pythons/CPython-2.6.8/lib/python2.6/socket.py
+        lineno = 554
+        function = create_connection
+        line = sock.connect(sa)
     """
     variables = ('thread_id', 'filename', 'lineno', 'function', 'line')
     regexp = r' '.join(('%s = (?P<%s>.+?)' % (var, var) for var in variables))
@@ -60,7 +64,8 @@ def convert_traceback(uwsgi_traceback):
                 'pre_context': [],
                 'vars': {}
             }
-            pre_context, context_line, post_context = get_lines_from_file(frame_result['abs_path'], frame_result['lineno'], 5)
+            pre_context, context_line, post_context = get_lines_from_file(frame_result['abs_path'],
+                                                                          frame_result['lineno'], 5)
             if context_line is not None:
                 frame_result.update({
                     'pre_context': pre_context,
@@ -97,7 +102,7 @@ def send_message(client, options, traceback):
         }
     }
 
-    print('Sending a message...',)
+    print('Sending a message...', )
     ident = client.get_ident(client.captureMessage(
         message='uWSGI harakiri',
         data=data,

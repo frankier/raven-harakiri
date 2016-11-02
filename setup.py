@@ -30,7 +30,7 @@ setup(
             'raven-harakiri = raven_harakiri:main',
         ],
     },
-    install_requires=['raven>=3.4'],
+    install_requires=['raven>=3.4', 'six'],
     tests_require=['pytest'],
     cmdclass={'test': PyTest},
     classifiers=[
