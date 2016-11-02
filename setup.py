@@ -1,11 +1,11 @@
 import sys
-from setuptools.command.test import test as TestCommand
+import setuptools.command.test
 from setuptools import setup
 
 
-class PyTest(TestCommand):
+class PyTest(setuptools.command.test.test):
     def finalize_options(self):
-        TestCommand.finalize_options(self)
+        setuptools.command.test.test.finalize_options(self)
         self.test_args = []
         self.test_suite = True
 
@@ -17,9 +17,9 @@ class PyTest(TestCommand):
 
 setup(
     name='raven-harakiri',
-    version='0.1.2',
+    version='0.1.3LMI',
     py_modules=['raven_harakiri'],
-    url='http://github.com/futurecolors/raven-harakiri',
+    url='http://github.com/LexMachinaInc/raven-harakiri',
     license='MIT',
     author='Ilya Baryshev',
     author_email='baryshev@gmail.com',
