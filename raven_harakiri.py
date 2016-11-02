@@ -78,15 +78,6 @@ def convert_traceback(uwsgi_traceback):
 
 
 def send_message(client, options, traceback):
-    print("Client configuration:")
-    for k in ('servers', 'project', 'public_key', 'secret_key'):
-        print('  %-15s: %s' % (k, getattr(client, k)))
-    print()
-
-    if not all([client.servers, client.project, client.public_key, client.secret_key]):
-        print("Error: All values must be set!")
-        sys.exit(1)
-
     if not client.is_enabled():
         print('Error: Client reports as being disabled!')
         sys.exit(1)
@@ -96,10 +87,6 @@ def send_message(client, options, traceback):
         'sentry.interfaces.Stacktrace': {
             'frames': convert_traceback(traceback)
         },
-        'sentry.interfaces.Http': {
-            'method': 'GET',
-            'url': 'http://example.com',
-        }
     }
 
     print('Sending a message...', )
@@ -115,8 +102,7 @@ def send_message(client, options, traceback):
         print('error!')
         return False
 
-    print('success!')
-    print('Event ID was %r' % (ident,))
+    print('event %r' % ident)
 
 
 def main():
