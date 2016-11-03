@@ -87,6 +87,10 @@ def send_message(client, options, traceback):
         'sentry.interfaces.Stacktrace': {
             'frames': convert_traceback(traceback)
         },
+        'sentry.interfaces.Http': {
+            'method': 'GET',
+            'url': 'http://example.com',
+        }
     }
 
     ident = client.get_ident(client.captureMessage(
