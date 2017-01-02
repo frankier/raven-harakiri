@@ -119,6 +119,15 @@ def main():
     opts, args = parser.parse_args()
 
     dsn = opts.dsn or os.environ.get('SENTRY_DSN')
+
+    if not dsn:
+        try:
+            from django.conf import settings
+        except ImportError:
+            pass
+        else:
+            dsn = settings.RAVEN_CONFIG['dsn']
+
     if not dsn:
         print("Error: No configuration detected!")
         print("You must either pass a DSN to the command, or set the SENTRY_DSN environment variable.")
