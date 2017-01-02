@@ -77,19 +77,38 @@ def convert_traceback(uwsgi_traceback):
     return traceback
 
 
-def send_message(client, options, traceback):
+def extract_http(log):
+    for line in log.split('\n'):
+        match = re.match(
+            r'^[^-]+- HARAKIRI \[core (?P<core>.+)\] (?P<remote_addr>.+) - '
+            r'(?P<method>.+) (?P<url>.+) since (?P<begin_time>.+)$', line)
+        if match:
+            break
+    if match:
+        values = match.groupdict()
+        return values['method'], values['url'], values['remote_addr']
+    else:
+        return None, None, None
+
+
+def send_message(client, options, log):
     if not client.is_enabled():
         print('Error: Client reports as being disabled!')
         sys.exit(1)
 
+    method, url, remote_addr = extract_http(log)
+
     data = {
         'logger': 'uwsgi.harakiri',
         'sentry.interfaces.Stacktrace': {
-            'frames': convert_traceback(traceback)
+            'frames': convert_traceback(log)
         },
         'sentry.interfaces.Http': {
-            'method': 'GET',
-            'url': 'http://example.com',
+            'method': method,
+            'url': url,
+            'env': {
+                'REMOTE_ADDR': remote_addr
+            }
         }
     }
 
