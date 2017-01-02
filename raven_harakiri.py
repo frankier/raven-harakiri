@@ -77,21 +77,43 @@ def convert_traceback(uwsgi_traceback):
     return traceback
 
 
-def send_message(client, options, traceback):
+def extract_http(log):
+    for line in log.split('\n'):
+        match = re.match(
+            r'^[^-]+- HARAKIRI \[core (?P<core>.+)\] (?P<remote_addr>.+) - '
+            r'(?P<method>.+) (?P<url>.+) since (?P<begin_time>.+)$', line)
+        if match:
+            break
+    if match:
+        values = match.groupdict()
+        return values['method'], values['url'], values['remote_addr']
+    else:
+        return None
+
+
+def send_message(client, options, log):
     if not client.is_enabled():
         print('Error: Client reports as being disabled!')
         sys.exit(1)
 
+    http_info = extract_http(log)
+
     data = {
         'logger': 'uwsgi.harakiri',
         'sentry.interfaces.Stacktrace': {
-            'frames': convert_traceback(traceback)
+            'frames': convert_traceback(log)
         },
-        'sentry.interfaces.Http': {
-            'method': 'GET',
-            'url': 'http://example.com',
-        }
     }
+
+    if http_info:
+        method, url, remote_addr = http_info
+        data['request'] = {
+            'method': method,
+            'url': url,
+            'env': {
+                'REMOTE_ADDR': remote_addr
+            }
+        }
 
     ident = client.get_ident(client.captureMessage(
         message='uWSGI harakiri',
@@ -136,10 +158,10 @@ def main():
     if not opts.verbose:
         sys.stdout = StringIO()
 
-    traceback = ''.join([line for line in fileinput.input(args)])
+    log = ''.join([line for line in fileinput.input(args)])
 
     client = Client(dsn, include_paths=['raven'], string_max_length=100000)
-    send_message(client, opts.__dict__, traceback=traceback)
+    send_message(client, opts.__dict__, log=log)
 
 
 if __name__ == '__main__':

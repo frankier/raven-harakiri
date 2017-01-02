@@ -61,7 +61,7 @@ thread_id = MainThread filename = /home/project/.pythonz/pythons/CPython-2.6.8/l
 /lib/libpthread.so.0(+0x68ca) [0x7f2c44b4a8ca]
 /lib/libc.so.6(clone+0x6d) [0x7f2c43413b6d]"""
 
-from raven_harakiri import convert_traceback
+from raven_harakiri import convert_traceback, extract_http
 
 
 def test_convert():
@@ -78,3 +78,17 @@ def test_convert():
         'pre_context': [],
         'vars': {}
     }
+
+
+example_http = \
+"""                                                                                                                                                                        Mon Jan  2 14:43:09 2017 - HARAKIRI !!! worker 1 status !!!
+Mon Jan  2 14:43:09 2017 - HARAKIRI [core 0] 127.0.0.1 - GET /trigger_harakiri/ since 1483368158 
+Mon Jan  2 14:43:09 2017 - HARAKIRI !!! end of worker 1 status !!!
+"""
+
+
+def test_extract_http():
+    method, url, remote_addr = extract_http(example_http)
+    assert method == 'GET'
+    assert url == '/trigger_harakiri/'
+    assert remote_addr == '127.0.0.1'
