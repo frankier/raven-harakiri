@@ -29,7 +29,7 @@ def store_json(option, opt_str, value, parser):
     setattr(parser.values, option.dest, value)
 
 
-def convert_traceback(uwsgi_traceback):
+def convert_traceback(uwsgi_traceback, thread_regex=None):
     """ Convert uwsgi traceback string with following pattern to raven protocol traceback
             thread_id = %s
             filename = %s
@@ -53,6 +53,9 @@ def convert_traceback(uwsgi_traceback):
         match = re.match(r'^%s$' % regexp, line)
         values = match.groupdict() if match else None
         if values:
+            if thread_regex and\
+                    not re.match(thread_regex, values['thread_id']):
+                continue
             frame_result = {
                 'abs_path': values['filename'],
                 'context_line': values['line'],
@@ -101,8 +104,8 @@ def send_message(client, options, log):
 
     data = {
         'logger': 'uwsgi.harakiri',
-        'sentry.interfaces.Stacktrace': {
-            'frames': convert_traceback(log)
+        'stacktrace': {
+            'frames': convert_traceback(log, options.get('thread_regex'))
         },
     }
 
@@ -164,6 +167,7 @@ def main():
     parser.add_option("--dsn")
     parser.add_option("--tail", action="store_true")
     parser.add_option("--watch", action="store_true")
+    parser.add_option("--thread-regex")
     opts, args = parser.parse_args()
 
     dsn = opts.dsn or os.environ.get('SENTRY_DSN')
