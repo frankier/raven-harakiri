@@ -69,10 +69,11 @@ def convert_traceback(uwsgi_traceback, thread_regex=None):
                 'vars': {}
             }
             pre_context, context_line, post_context = get_lines_from_file(frame_result['abs_path'],
-                                                                          frame_result['lineno'], 5)
+                                                                          frame_result['lineno'] - 1, 5)
             if context_line is not None:
                 frame_result.update({
                     'pre_context': pre_context,
+                    'context_line': context_line,
                     'post_context': post_context,
                 })
 
