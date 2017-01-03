@@ -8,6 +8,7 @@ Original copyrights:
     :license: BSD, see LICENSE for more details.
 """
 from __future__ import print_function
+import subprocess
 import fileinput
 import logging
 import re
@@ -129,6 +130,29 @@ def send_message(client, options, log):
     return ident
 
 
+def group_log(client, options, to_follow, proc=None):
+    in_harakiri = False
+    harakiri_lines = []
+    harakiris_seen = 0
+    while 1:
+        line = to_follow.readline()
+        if not line:
+            if proc and proc.returncode:
+                print("Error: tail exited uncleanly -- you must use GNU tail")
+                os.exit(1)
+            break
+        if 'HARAKIRI ON WORKER' in line:
+            in_harakiri = True
+        if in_harakiri:
+            harakiri_lines.append(line)
+            harakiris_seen += 'HARAKIRI' in line
+            if harakiris_seen == 4:
+                send_message(client, options, log="".join(harakiri_lines))
+                in_harakiri = False
+                harakiri_lines = []
+                harakiris_seen = 0
+
+
 def main():
     root = logging.getLogger('sentry.errors')
     root.setLevel(logging.DEBUG)
@@ -138,6 +162,8 @@ def main():
     parser.add_option("--tags", action="callback", callback=store_json, type="string", nargs=1, dest="tags")
     parser.add_option("--verbose", action="store_true")
     parser.add_option("--dsn")
+    parser.add_option("--tail", action="store_true")
+    parser.add_option("--watch", action="store_true")
     opts, args = parser.parse_args()
 
     dsn = opts.dsn or os.environ.get('SENTRY_DSN')
@@ -149,10 +175,26 @@ def main():
     if not opts.verbose:
         sys.stdout = StringIO()
 
-    log = ''.join([line for line in fileinput.input(args)])
-
     client = Client(dsn, include_paths=['raven'], string_max_length=100000)
-    send_message(client, opts.__dict__, log=log)
+
+    if opts.watch:
+        if len(args) != 1:
+            print('Error: In --watch mode you must provide exactly one file '
+                  'argument')
+            sys.exit(1)
+        tail = subprocess.Popen(['tail', '--follow=name', '--retry', args[0]], stdout=subprocess.PIPE)
+        group_log(client, opts.__dict__, tail.stdout, tail)
+
+    elif opts.tail:
+        if len(args) > 0:
+            print('Error: In --tail mode, no file arguments should be provided'
+                  ' -- pipe to STDIN instead')
+            sys.exit(1)
+        group_log(client, opts.__dict__, sys.stdin)
+
+    else:
+        log = ''.join([line for line in fileinput.input(args)])
+        send_message(client, opts.__dict__, log=log)
 
 
 if __name__ == '__main__':
